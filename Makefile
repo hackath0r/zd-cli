@@ -30,8 +30,11 @@ openapi-pull: ## Pull and normalize the latest OpenAPI spec from apidocs.zenduty
 test: ## Run unit tests
 	$(GO) test -race -count=1 ./...
 
-test-cov: ## Run tests with coverage report
+test-cov: ## Run tests with coverage report (HTML + handwritten-only summary)
 	$(GO) test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
+	@grep -v '\.gen\.go:' coverage.txt | grep -v 'tools/json2yaml\|tools/normalize-spec' > coverage-handwritten.txt
+	@echo "--- handwritten code coverage ---"
+	@$(GO) tool cover -func=coverage-handwritten.txt | tail -1
 	$(GO) tool cover -html=coverage.txt -o coverage.html
 
 lint: ## Run golangci-lint
@@ -53,7 +56,7 @@ release-snapshot: ## Build a local goreleaser snapshot
 	goreleaser release --clean --snapshot --skip=publish
 
 clean: ## Remove build artifacts
-	rm -rf $(DIST) $(BINARY) ximr coverage.txt coverage.html
+	rm -rf $(DIST) $(BINARY) ximr coverage.txt coverage-handwritten.txt coverage.html cover.out
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
