@@ -1,0 +1,30 @@
+# Binaries
+/zd
+/ximr
+/dist/
+/bin/
+
+# Test artifacts
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+
+# goreleaser
+/dist/
+
+# Local env / secrets
+.env
+.env.local
+*.pem
+*.key
+
+# vhs / demo artifacts (regen in CI; comment out if you want to commit)
+docs/demo.mp4

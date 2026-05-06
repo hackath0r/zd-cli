@@ -1,0 +1,42 @@
+run:
+  timeout: 5m
+  go: "1.22"
+  tests: true
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gocritic
+    - gosec
+    - gofmt
+    - goimports
+    - revive
+    - misspell
+    - unconvert
+
+linters-settings:
+  goimports:
+    local-prefixes: github.com/hackath0r/zd-cli
+  gosec:
+    excludes:
+      - G104 # we explicitly accept some unchecked errors in cobra RunE
+  revive:
+    rules:
+      - name: var-naming
+      - name: package-comments
+      - name: exported
+        disabled: true # we'll re-enable as the public API stabilizes
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters: [gosec, errcheck]
+    - path: \.gen\.go
+      linters: [gosec, errcheck, govet, staticcheck, unused, gocritic, revive, misspell, unconvert, goimports, gofmt]
+  max-issues-per-linter: 0
+  max-same-issues: 0

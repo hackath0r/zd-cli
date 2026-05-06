@@ -1,0 +1,28 @@
+zd-cli
+Copyright 2026 Prashant Bhargava
+
+This product includes software developed by:
+  - Prashant Bhargava and contributors (https://github.com/hackath0r/zd-cli)
+
+This product uses the Zenduty / Xurrent IMR REST API and includes a vendored
+copy of the Zenduty OpenAPI specification at api/openapi.yaml. The OpenAPI
+specification is the property of Zenduty (now part of Xurrent) and is
+distributed under the Apache License, Version 2.0. See:
+  - https://apidocs.zenduty.com/
+  - https://www.zenduty.com/
+  - https://www.xurrent.com/
+
+This product also incorporates code from the following open-source projects,
+each used under their respective licenses:
+
+  - github.com/spf13/cobra (Apache-2.0)
+  - github.com/spf13/viper (MIT)
+  - github.com/oapi-codegen/oapi-codegen (Apache-2.0)
+  - github.com/goreleaser/goreleaser (MIT) -- build-time only
+  - github.com/charmbracelet/lipgloss (MIT)
+  - github.com/charmbracelet/vhs (MIT) -- demo generation only
+
+Trademarks: "Zenduty" and "Xurrent" are trademarks of their respective
+owners. This project is not affiliated with or endorsed by Zenduty or
+Xurrent. Use of the names is solely for describing what this software
+interoperates with.
