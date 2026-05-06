@@ -82,6 +82,21 @@ func newRootCmd() *cobra.Command {
 		newIncidentCmd(),
 		newEventCmd(),
 		newOncallCmd(),
+		newAccountCmd(),
+		newUserCmd(),
+		newTeamCmd(),
+		newScheduleCmd(),
+		newServiceCmd(),
+		newEscalationPolicyCmd(),
+		newPriorityCmd(),
+		newTagCmd(),
+		newSLOCmd(),
+		newPostmortemCmd(),
+		newMaintenanceCmd(),
+		newRouterCmd(),
+		newAlertRuleCmd(),
+		newIntegrationCmd(),
+		newAnalyticsCmd(),
 	)
 
 	return cmd
