@@ -1,0 +1,14 @@
+package: zenduty
+# Path is relative to the directory the codegen is invoked from. The
+# go:generate directive lives in internal/zenduty/gen.go and is executed
+# in that directory, so this writes alongside gen.go.
+output: zenduty.gen.go
+generate:
+  models: true
+  client: true
+  embedded-spec: false
+output-options:
+  skip-prune: false
+  user-templates: {}
+compatibility:
+  always-prefix-enum-values: true

@@ -20,11 +20,12 @@ install: ## Install zd to GOBIN
 generate: ## Regenerate the OpenAPI client from api/openapi.yaml
 	$(GO) generate ./internal/zenduty/...
 
-openapi-pull: ## Pull the latest OpenAPI spec from apidocs.zenduty.com
+openapi-pull: ## Pull and normalize the latest OpenAPI spec from apidocs.zenduty.com
 	@curl -fsSL https://apidocs.zenduty.com/openapi.json -o api/openapi.json
 	@$(GO) run ./internal/tools/json2yaml api/openapi.json api/openapi.yaml
 	@rm api/openapi.json
-	@echo "OpenAPI spec refreshed; run 'make generate' next."
+	@$(GO) run ./internal/tools/normalize-spec api/openapi.yaml api/openapi.yaml
+	@echo "OpenAPI spec refreshed and normalized; run 'make generate' next."
 
 test: ## Run unit tests
 	$(GO) test -race -count=1 ./...
