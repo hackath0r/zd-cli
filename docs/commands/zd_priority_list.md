@@ -1,15 +1,9 @@
 ## zd priority list
 
-List priorities
-
-### Synopsis
-
-List priorities
-
-Not yet wrapped by zd; the upstream API is GET /api/account/priorities/. Track progress and request prioritization at https://github.com/hackath0r/zd-cli/issues.
+List priorities (GET /api/account/teams/{team_id}/priority/)
 
 ```
-zd priority list [flags]
+zd priority list <team-id> [flags]
 ```
 
 ### Options

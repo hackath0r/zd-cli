@@ -1,15 +1,9 @@
 ## zd priority delete
 
-Delete a priority
-
-### Synopsis
-
-Delete a priority
-
-Not yet wrapped by zd; the upstream API is DELETE /api/account/priorities/{priority_id}/. Track progress and request prioritization at https://github.com/hackath0r/zd-cli/issues.
+Delete a priority (DELETE /api/account/teams/{team_id}/priority/{priority_id}/)
 
 ```
-zd priority delete [flags]
+zd priority delete <team-id> <priority-id> [flags]
 ```
 
 ### Options

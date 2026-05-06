@@ -121,20 +121,36 @@ zd oncall now                                  # uses default_team from the prof
 
 Generate an API token at: **Zenduty / Xurrent console -> Account -> API Keys**.
 
-## Top-10 cheat sheet
+## Cheat sheet
+
+### Incident response
 
 | Command | What it does |
 | ------- | ------------- |
 | `zd incident list --status open` | List open (triggered + acknowledged) incidents |
 | `zd incident get 4815`           | Show one incident |
-| `zd incident ack 4815`           | Acknowledge it |
-| `zd incident resolve 4815`       | Resolve it |
+| `zd incident ack 4815` / `zd incident resolve 4815` | Ack / resolve |
 | `zd incident note add 4815 -m "rollback abc123"` | Drop a timeline note |
 | `zd incident responder add-user 4815 --user grace.hopper` | Page a teammate |
-| `zd event fire --integration-key K --message "db unreachable" --entity-id db-1`<br/>`  --wait` | Fire an alert and wait for ingestion to terminate |
+| `zd event fire --integration-key K --message "db unreachable" --entity-id db-1 --wait` | Fire an alert and wait for ingestion to terminate |
 | `zd event status <trace-id> --watch` | Poll a trace until completed/failed |
-| `zd oncall list --team T` | Full oncall roster for a team |
-| `zd oncall now` | Current primaries for the profile's default team |
+| `zd oncall list --team T` / `zd oncall now` | Oncall roster / current primaries |
+
+### Admin & configuration
+
+| Command | What it does |
+| ------- | ------------- |
+| `zd team list` / `zd team get <id>` / `zd team create --name foo` | Manage teams |
+| `zd team member add <team-id> --user alice --role 1` | Add a team member |
+| `zd service create <team-id> --name api --escalation-policy <ep-id>` | Create a service |
+| `zd schedule create <team-id> --body @schedule.json` | Create a complex on-call schedule |
+| `zd schedule override add <team-id> <sched-id> --user alice --start-time ... --end-time ...` | One-off shift swap |
+| `zd escalation-policy create <team-id> --body @ep.json` | Create an escalation policy |
+| `zd priority create <team-id> --name P0 --color "#ff0000"` | Define a priority |
+| `zd integration transformer create <t> <s> <int> --body @rule.json` | Create an alert rule (alias: `zd alert-rule create ...`) |
+| `zd router list` / `zd router ruleset create <router-id> --body @rs.json` | Manage event routers + rulesets |
+| `zd analytics incidents --from 2026-01-01 --to 2026-04-30` | Quarterly incident stats |
+| `zd account custom-role list` / `zd account invite --email alice@co.com` | Account-level admin |
 
 Pair with `--output json` and `jq` for scripting:
 
@@ -240,28 +256,45 @@ flowchart TD
     rel --> goinstall["go install ...@latest"]
 ```
 
-## Coverage roadmap
+## Coverage
 
-`zd-cli v0.1.x` covers the operational hot path:
+`zd-cli v0.2.x` wraps the **entire** Zenduty / Xurrent IMR public API
+surface — every operation in the upstream OpenAPI spec is reachable from
+the CLI today:
 
 | Area | Status | Commands |
 | ---- | ------ | -------- |
-| Incidents          | full | list / get / create / update / ack / resolve / alerts / note / tag / responder |
-| Events             | full | fire / ack / resolve / status (with --wait / --watch) |
-| Oncall             | full | list / who / now |
-| Config             | full | init / show / use / set / doctor / path |
-| Account / users    | _planned (v0.2)_ | members, custom roles, invites |
-| Teams              | _planned (v0.2)_ | full CRUD + nested resources |
-| Services / integrations | _planned (v0.2)_ | full CRUD + regenerate-key |
-| Schedules / overrides   | _planned (v0.3)_ | v1 + v2 |
-| Escalation policies     | _planned (v0.3)_ | full CRUD |
-| Tags / priorities / SLA / postmortem / maintenance / task-templates | _planned (v0.4)_ | full CRUD |
-| Router + alert rules    | _planned (v0.4)_ | full CRUD |
-| Analytics               | _planned (v0.5)_ | aggregate stats |
+| Incidents               | full | `list` / `get` / `create` / `update` / `ack` / `resolve` / `alerts` / `note` / `tag` / `responder` |
+| Events                  | full | `fire` / `ack` / `resolve` / `status` (with `--wait` / `--watch`) |
+| Oncall                  | full | `list` / `who` / `now` |
+| Config                  | full | `init` / `show` / `use` / `set` / `doctor` / `path` |
+| Account                 | full | `member` / `custom-role` / `invite` / `delete-user` / `regenerate-integration-key` / `integration-metadata` |
+| Users                   | full | `list` / `get` / `update` / `contact` / `forwarding-rule` / `notification-rule` / `custom-role` |
+| Teams                   | full | `list` / `get` / `create` / `update` / `delete` / `member` / `permission` / `role` / `task-template` |
+| Services                | full | `list` / `get` / `create` / `update` / `delete` |
+| Schedules               | full | `list` / `get` / `create` / `update` / `delete` / `override list` / `override add` |
+| Escalation policies     | full | `list` / `get` / `create` / `update` / `delete` |
+| Priorities              | full | `list` / `get` / `create` / `update` / `delete` |
+| Tags                    | full | `list` / `get` / `create` / `update` / `delete` (per-team) |
+| SLAs                    | full | `list` / `get` / `create` / `update` / `delete` |
+| Postmortems             | full | `list` / `get` / `create` / `update` / `delete` |
+| Maintenance windows     | full | `list` / `get` / `create` / `update` / `delete` |
+| Event router + rulesets | full | `list` / `get` / `create` / `update` / `delete` / `ruleset` (CRUD + reorder) |
+| Integrations            | full | `list` / `get` / `create` / `update` / `delete` + `transformer` (alias `alert-rule`, full CRUD) |
+| Analytics               | full | `incidents` / `services` / `teams` / `users` (filter via `--from / --to / --body`) |
 
-Track progress on the [issues board](https://github.com/hackath0r/zd-cli/issues?q=label%3Aapi-coverage).
-The OpenAPI spec is vendored at `api/openapi.yaml` and a weekly
-`openapi-sync` workflow keeps it fresh.
+Around **140 distinct API call sites** are wired up across 18 top-level
+commands, mirroring the ~140 unique operations in the upstream OpenAPI
+spec. Auto-generated reference for every subcommand and flag lives at
+[`docs/commands/`](docs/commands).
+
+For write operations, you can pass the request body either via
+convenience flags (e.g. `--name`, `--from`, `--to`, `--user`) or as a
+raw JSON object via `--body @file.json`, `--body -` (stdin), or
+`--data '{...}'`. Convenience flags fill in known fields; `--body`
+takes precedence whenever the same key is set in both. The OpenAPI
+spec is vendored at `api/openapi.yaml` and a weekly `openapi-sync`
+workflow keeps it fresh.
 
 ## Contributing
 

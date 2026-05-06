@@ -1,21 +1,20 @@
 ## zd priority create
 
-Create a priority
-
-### Synopsis
-
-Create a priority
-
-Not yet wrapped by zd; the upstream API is POST /api/account/priorities/. Track progress and request prioritization at https://github.com/hackath0r/zd-cli/issues.
+Create a priority (POST /api/account/teams/{team_id}/priority/)
 
 ```
-zd priority create [flags]
+zd priority create <team-id> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for create
+      --body string          path to a JSON request body (prefix with @ or pass - for stdin)
+      --color string         priority color hex (convenience flag)
+      --data string          inline JSON request body
+      --description string   priority description (convenience flag)
+  -h, --help                 help for create
+      --name string          priority name (convenience flag)
 ```
 
 ### Options inherited from parent commands

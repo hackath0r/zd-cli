@@ -1,15 +1,9 @@
 ## zd escalation-policy delete
 
-Delete an escalation policy
-
-### Synopsis
-
-Delete an escalation policy
-
-Not yet wrapped by zd; the upstream API is DELETE /api/account/teams/{team_id}/escalation_policies/{ep_id}/. Track progress and request prioritization at https://github.com/hackath0r/zd-cli/issues.
+Delete an escalation policy (DELETE /api/account/teams/{team_id}/escalation_policies/{ep_id}/)
 
 ```
-zd escalation-policy delete [flags]
+zd escalation-policy delete <team-id> <ep-id> [flags]
 ```
 
 ### Options

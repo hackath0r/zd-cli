@@ -1,21 +1,17 @@
 ## zd priority update
 
-Update a priority
-
-### Synopsis
-
-Update a priority
-
-Not yet wrapped by zd; the upstream API is PUT /api/account/priorities/{priority_id}/. Track progress and request prioritization at https://github.com/hackath0r/zd-cli/issues.
+Update a priority (PUT /api/account/teams/{team_id}/priority/{priority_id}/)
 
 ```
-zd priority update [flags]
+zd priority update <team-id> <priority-id> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for update
+      --body string   path to a JSON request body (prefix with @ or pass - for stdin)
+      --data string   inline JSON request body
+  -h, --help          help for update
 ```
 
 ### Options inherited from parent commands

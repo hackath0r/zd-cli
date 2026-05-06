@@ -1,21 +1,17 @@
 ## zd escalation-policy update
 
-Update an escalation policy
-
-### Synopsis
-
-Update an escalation policy
-
-Not yet wrapped by zd; the upstream API is PUT /api/account/teams/{team_id}/escalation_policies/{ep_id}/. Track progress and request prioritization at https://github.com/hackath0r/zd-cli/issues.
+Update an escalation policy (PUT /api/account/teams/{team_id}/escalation_policies/{ep_id}/)
 
 ```
-zd escalation-policy update [flags]
+zd escalation-policy update <team-id> <ep-id> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for update
+      --body string   path to a JSON request body (prefix with @ or pass - for stdin)
+      --data string   inline JSON request body
+  -h, --help          help for update
 ```
 
 ### Options inherited from parent commands

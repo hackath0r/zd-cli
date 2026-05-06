@@ -1,15 +1,9 @@
 ## zd escalation-policy list
 
-List escalation policies
-
-### Synopsis
-
-List escalation policies
-
-Not yet wrapped by zd; the upstream API is GET /api/account/teams/{team_id}/escalation_policies/. Track progress and request prioritization at https://github.com/hackath0r/zd-cli/issues.
+List escalation policies (GET /api/account/teams/{team_id}/escalation_policies/)
 
 ```
-zd escalation-policy list [flags]
+zd escalation-policy list <team-id> [flags]
 ```
 
 ### Options

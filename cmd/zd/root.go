@@ -90,7 +90,7 @@ func newRootCmd() *cobra.Command {
 		newEscalationPolicyCmd(),
 		newPriorityCmd(),
 		newTagCmd(),
-		newSLOCmd(),
+		newSLACmd(),
 		newPostmortemCmd(),
 		newMaintenanceCmd(),
 		newRouterCmd(),

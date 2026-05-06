@@ -1,21 +1,25 @@
 ## zd escalation-policy create
 
-Create an escalation policy
+Create an escalation policy (POST /api/account/teams/{team_id}/escalation_policies/)
 
 ### Synopsis
 
-Create an escalation policy
+Create an escalation policy. The Zenduty schema is non-trivial (rules + targets);
+pass --body @ep.json with the full payload. See the Zenduty docs for the EP schema.
 
-Not yet wrapped by zd; the upstream API is POST /api/account/teams/{team_id}/escalation_policies/. Track progress and request prioritization at https://github.com/hackath0r/zd-cli/issues.
+Example body:
+  {"name": "Primary", "rules": [{"delay": 0, "targets": [{"type": "user", "user": "alice"}]}]}
 
 ```
-zd escalation-policy create [flags]
+zd escalation-policy create <team-id> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for create
+      --body string   path to a JSON request body (prefix with @ or pass - for stdin)
+      --data string   inline JSON request body
+  -h, --help          help for create
 ```
 
 ### Options inherited from parent commands

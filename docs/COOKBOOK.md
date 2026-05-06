@@ -132,16 +132,65 @@ Whether you typed `zd incident list` or `ximr incident list`, the
 binary is identical and produces the same output. The `--debug` flag
 even shows you which name was invoked.
 
-## 10. Find a service unique_id (until v0.2 ships service commands)
-
-Most CRUDs land in v0.2 (see the README roadmap). Until then, use
-`curl` + the typed JSON output:
+## 10. Find a service unique_id
 
 ```sh
-curl -fsSL -H "Authorization: Token $ZENDUTY_API_TOKEN" \
-  "https://www.zenduty.com/api/account/teams/$TEAM_ID/services/" \
-  | jq '.[] | {unique_id, name}'
+zd service list "$TEAM_ID" --output json | jq '.[] | {unique_id, name}'
 ```
 
-Track the v0.2 milestone here:
-https://github.com/hackath0r/zd-cli/issues?q=label%3Aapi-coverage
+## 11. Bootstrap a new team end-to-end
+
+Idempotently scaffold a team, escalation policy, service, and event
+router ruleset from the command line. Useful when onboarding a new
+microservice from a Terraform-style script:
+
+```sh
+TEAM=$(zd team create --name "Payments" --output json | jq -r '.unique_id')
+EP=$(zd escalation-policy create "$TEAM" \
+  --body '{"name":"primary","rules":[{"delay":0,"targets":[{"type":"user","user":"alice"}]}]}' \
+  --output json | jq -r '.unique_id')
+zd service create "$TEAM" --name "payments-api" --escalation-policy "$EP"
+```
+
+## 12. Scheduled override via CLI
+
+When alice is taking the morning off and bob will cover:
+
+```sh
+zd schedule override add "$TEAM" "$SCHEDULE" \
+  --user bob \
+  --start-time "$(date -u -v+0H +%FT%TZ)" \
+  --end-time   "$(date -u -v+4H +%FT%TZ)"
+```
+
+## 13. Quarterly stats for the eng newsletter
+
+```sh
+zd analytics incidents \
+  --from 2026-01-01 --to 2026-03-31 \
+  --output json \
+  | jq '{total_incidents, mttr_seconds, by_priority}'
+```
+
+## 14. Bulk-create transformers from a JSON list
+
+Each transformer (a.k.a. alert rule) has its own POST. Drive them in
+bulk from a JSON file containing an array of payloads:
+
+```sh
+jq -c '.[]' rules.json | while read -r rule; do
+  zd integration transformer create "$TEAM" "$SERVICE" "$INTEGRATION" --data "$rule"
+done
+```
+
+The `transformer` command is also reachable as `zd alert-rule` for
+discoverability.
+
+## 15. Find services without an escalation policy
+
+```sh
+zd team list --output json | jq -r '.[].unique_id' | while read -r team; do
+  zd service list "$team" --output json \
+    | jq --arg team "$team" '.[] | select(.escalation_policy == null) | {team:$team, service: .name}'
+done
+```

@@ -1,15 +1,9 @@
 ## zd escalation-policy get
 
-Show an escalation policy
-
-### Synopsis
-
-Show an escalation policy
-
-Not yet wrapped by zd; the upstream API is GET /api/account/teams/{team_id}/escalation_policies/{ep_id}/. Track progress and request prioritization at https://github.com/hackath0r/zd-cli/issues.
+Show an escalation policy (GET /api/account/teams/{team_id}/escalation_policies/{ep_id}/)
 
 ```
-zd escalation-policy get [flags]
+zd escalation-policy get <team-id> <ep-id> [flags]
 ```
 
 ### Options

@@ -251,6 +251,114 @@ func decodeOne[T any](body []byte) (*T, error) {
 	return &out, nil
 }
 
+// deref dereferences a pointer-to-T, returning a zero T when nil.
+// Saves a lot of `if x == nil { return T{} }` boilerplate in command
+// implementations that render a single object.
+func deref[T any](p *T) T {
+	if p == nil {
+		var zero T
+		return zero
+	}
+	return *p
+}
+
+// ifNonZero returns the int boxed in `any` when non-zero; nil otherwise.
+// Used by mergeBody to skip flags the user didn't set.
+func ifNonZero(i int) any {
+	if i == 0 {
+		return nil
+	}
+	return i
+}
+
+// runListRaw executes a list-style API call and renders the response as
+// JSON / YAML / table (table falls back to JSON when no spec is given,
+// since most admin resources don't have a curated table projection).
+// The callback returns the response body and a typed response wrapper
+// implementing httpResponse so requireOK can build a uniform error.
+func runListRaw[R httpResponse](cmd *cobra.Command, do func(ctx context.Context, cli *zenduty.ClientWithResponses) ([]byte, R, error)) error {
+	res, _, err := callAPI(cmd, func(ctx context.Context, cli *zenduty.ClientWithResponses, _ zenduty.Config) (*[]map[string]any, error) {
+		body, resp, err := do(ctx, cli)
+		if err != nil {
+			return nil, err
+		}
+		if err := requireOK(resp, body, ""); err != nil {
+			return nil, err
+		}
+		out, err := decodeList[map[string]any](body)
+		if err != nil {
+			return nil, err
+		}
+		return &out, nil
+	})
+	if err != nil {
+		return err
+	}
+	return renderResult(cmd, *res, nil)
+}
+
+// runGetRaw is the single-object analogue of runListRaw.
+func runGetRaw[R httpResponse](cmd *cobra.Command, do func(ctx context.Context, cli *zenduty.ClientWithResponses) ([]byte, R, error)) error {
+	res, _, err := callAPI(cmd, func(ctx context.Context, cli *zenduty.ClientWithResponses, _ zenduty.Config) (*map[string]any, error) {
+		body, resp, err := do(ctx, cli)
+		if err != nil {
+			return nil, err
+		}
+		if err := requireOK(resp, body, ""); err != nil {
+			return nil, err
+		}
+		return decodeOne[map[string]any](body)
+	})
+	if err != nil {
+		return err
+	}
+	return renderResult(cmd, deref(res), nil)
+}
+
+// runWriteRaw drives a write (POST/PUT/PATCH) call. The callback returns
+// the typed response wrapper plus its body bytes so we can:
+//   - surface a typed error (requireOK + zerrors.API) when status >= 400
+//   - print 'msg\n' to stdout on success (consistent UX)
+//   - render the response body to stdout when the user asked for json/yaml.
+func runWriteRaw(cmd *cobra.Command, msg string, do func(ctx context.Context, cli *zenduty.ClientWithResponses) (httpResponse, []byte, error)) error {
+	res, _, err := callAPI(cmd, func(ctx context.Context, cli *zenduty.ClientWithResponses, _ zenduty.Config) (*map[string]any, error) {
+		resp, body, err := do(ctx, cli)
+		if err != nil {
+			return nil, err
+		}
+		if err := requireOK(resp, body, ""); err != nil {
+			return nil, err
+		}
+		return decodeOne[map[string]any](body)
+	})
+	if err != nil {
+		return err
+	}
+	format, _ := outputFormat(cmd)
+	if format == output.FormatJSON || format == output.FormatYAML {
+		return renderResult(cmd, deref(res), nil)
+	}
+	fmt.Fprintln(cmd.OutOrStdout(), msg)
+	return nil
+}
+
+// runDelete drives a DELETE call. Like runWriteRaw, but the API rarely
+// returns a body so we just print 'msg\n' on success.
+func runDelete(cmd *cobra.Command, msg string, do func(ctx context.Context, cli *zenduty.ClientWithResponses) (httpResponse, []byte, error)) error {
+	_, _, err := callAPI(cmd, func(ctx context.Context, cli *zenduty.ClientWithResponses, _ zenduty.Config) (*struct{}, error) {
+		resp, body, err := do(ctx, cli)
+		if err != nil {
+			return nil, err
+		}
+		return nil, requireOK(resp, body, "")
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(cmd.OutOrStdout(), msg)
+	return nil
+}
+
 // notImplemented returns a RunE that exits 2 (usage) explaining the
 // command is part of the spec but not yet wrapped by the CLI. Used as
 // scaffolding for the v0.x admin CRUDs roadmap.
