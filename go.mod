@@ -2,6 +2,8 @@ module github.com/hackath0r/zd-cli
 
 go 1.25.0
 
+toolchain go1.25.1
+
 require (
 	github.com/oapi-codegen/oapi-codegen/v2 v2.7.0
 	github.com/oapi-codegen/runtime v1.4.0
