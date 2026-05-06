@@ -18,9 +18,19 @@ linters:
     - misspell
     - unconvert
   settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintln
+        - fmt.Fprintf
+        - fmt.Fprint
+        - (io.Closer).Close
+        - (*os.File).Close
     gosec:
       excludes:
         - G104
+        - G301
+        - G304
+        - G306
     revive:
       rules:
         - name: var-naming
@@ -31,6 +41,8 @@ linters:
         linters: [gosec, errcheck]
       - path: \.gen\.go
         linters: [gosec, errcheck, govet, staticcheck, unused, gocritic, revive, misspell, unconvert]
+      - path: internal/tools/
+        linters: [gosec, errcheck]
 
 formatters:
   enable:

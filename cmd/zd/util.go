@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	stderrors "errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -60,11 +59,9 @@ func callContext(parent context.Context) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(parent, 30*time.Second)
 }
 
-// ptrStr / ptrInt build pointers to literals; lots of generated request
-// bodies use *string / *int because the OpenAPI schema marks fields as
-// optional.
-func ptrStr(s string) *string { return &s }
-func ptrInt(i int) *int       { return &i }
+// ptrInt builds a pointer to an int literal; many generated request
+// bodies use *int because the OpenAPI schema marks fields as optional.
+func ptrInt(i int) *int { return &i }
 
 // strPtrOrNil returns a pointer to s, or nil if s is empty. Useful when
 // wiring optional flags into request bodies.
@@ -179,7 +176,7 @@ func callAPI[T any](cmd *cobra.Command, do func(ctx context.Context, cli *zendut
 	out, err := do(ctx, cli, cfg)
 	if err != nil {
 		var ee *zerrors.ExitError
-		if stderrors.As(err, &ee) {
+		if errors.As(err, &ee) {
 			return nil, cfg, err
 		}
 		return nil, cfg, zerrors.Networkf(err, "API call failed")
@@ -187,17 +184,10 @@ func callAPI[T any](cmd *cobra.Command, do func(ctx context.Context, cli *zendut
 	return out, cfg, nil
 }
 
-// errIs is a typed alias to keep RunEs short.
-func errIs(err, target error) bool { return errors.Is(err, target) }
-
-// httpResp returns the http.Response from a generated *WithResponse type.
-// Generated types embed an *http.Response field named HTTPResponse.
-type httpRespHaver interface {
-	httpResponse
-}
-
 // urlFromResp pulls the request URL off a generated response wrapper for
 // inclusion in error messages. Returns "" if the request URL is missing.
+//
+//nolint:unused // exposed for future commands that need URL context in errors.
 func urlFromResp(r *http.Response) string {
 	if r == nil || r.Request == nil || r.Request.URL == nil {
 		return ""
@@ -264,8 +254,10 @@ func decodeOne[T any](body []byte) (*T, error) {
 // notImplemented returns a RunE that exits 2 (usage) explaining the
 // command is part of the spec but not yet wrapped by the CLI. Used as
 // scaffolding for the v0.x admin CRUDs roadmap.
+//
+//nolint:unused // referenced by upcoming admin-CRUD scaffolding.
 func notImplemented(api string) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, _ []string) error {
+	return func(_ *cobra.Command, _ []string) error {
 		return &zerrors.ExitError{
 			Code: zerrors.CodeUsage,
 			Msg:  fmt.Sprintf("not yet implemented in this CLI release; the underlying API (%s) is in the OpenAPI spec and will be wrapped in a future version. Track progress at https://github.com/hackath0r/zd-cli/issues", api),

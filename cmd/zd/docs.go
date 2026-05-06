@@ -19,7 +19,7 @@ func newDocsCmd() *cobra.Command {
 			if dir == "" {
 				dir = "docs/commands"
 			}
-			if err := os.MkdirAll(dir, 0o755); err != nil {
+			if err := os.MkdirAll(dir, 0o750); err != nil {
 				return err
 			}
 			root := cmd.Root()

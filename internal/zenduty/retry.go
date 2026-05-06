@@ -86,16 +86,14 @@ func (rt *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		resp, err := rt.base.RoundTrip(req)
 		lastResp, lastErr = resp, err
 
-		// Network-level error: retry on transient ones, fail otherwise.
-		if err != nil {
+		switch {
+		case err != nil:
 			if !isTransientErr(err) {
 				return nil, err
 			}
-		} else if !shouldRetryStatus(resp.StatusCode) {
+		case !shouldRetryStatus(resp.StatusCode):
 			return resp, nil
-		} else {
-			// Drain and close the response body before retrying so the
-			// connection can be reused.
+		default:
 			_, _ = io.Copy(io.Discard, resp.Body)
 			_ = resp.Body.Close()
 		}

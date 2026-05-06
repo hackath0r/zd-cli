@@ -98,14 +98,14 @@ func serviceName(s *zenduty.ServicePostPut) string {
 
 func newIncidentListCmd() *cobra.Command {
 	var (
-		statusFilter         []string
-		teamIDs              []string
-		serviceIDs           []string
-		priorityIDs          []string
-		userIDs              []string
-		fromDate, toDate     string
-		page                 int
-		allTeams             bool
+		statusFilter     []string
+		teamIDs          []string
+		serviceIDs       []string
+		priorityIDs      []string
+		userIDs          []string
+		fromDate, toDate string
+		page             int
+		allTeams         bool
 	)
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -183,9 +183,11 @@ Pass --status multiple times for multi-status filters.`,
 
 // normalizeStatusFilter maps friendly --status values into the integer the
 // filter API expects. The Zenduty mapping is:
-//   -1 -> open (triggered + acknowledged)
-//    0 -> all (triggered + acknowledged + resolved)
-//    1 -> triggered, 2 -> acknowledged, 3 -> resolved
+//
+//	-1 -> open (triggered + acknowledged)
+//	 0 -> all (triggered + acknowledged + resolved)
+//	 1 -> triggered, 2 -> acknowledged, 3 -> resolved
+//
 // We accept comma-separated multi-values from cobra StringSliceVar but
 // fold them down to a single integer because the API does not accept a
 // list. Multi-status outside of "open" / "all" is rejected with a clear
@@ -266,7 +268,7 @@ func newIncidentCreateCmd() *cobra.Command {
 			}
 			if cmd.Flags().Changed("urgency") {
 				body.Status = nil // not used on create
-				_ = urgency      // note: IncidentPayload schema exposes no urgency field; flag retained for future use
+				_ = urgency       // note: IncidentPayload schema exposes no urgency field; flag retained for future use
 			}
 			res, _, err := callAPI(cmd, func(ctx context.Context, cli *zenduty.ClientWithResponses, cfg zenduty.Config) (*zenduty.Incident, error) {
 				resp, err := cli.PostApiIncidentsWithResponse(ctx, body)

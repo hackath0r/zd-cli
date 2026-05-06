@@ -8,7 +8,6 @@ package main
 
 import (
 	"errors"
-	stderrors "errors"
 	"fmt"
 	"os"
 
@@ -27,12 +26,8 @@ func writeError(err error) {
 		return
 	}
 	var ee *zerrors.ExitError
-	if stderrors.As(err, &ee) {
+	if errors.As(err, &ee) {
 		fmt.Fprintln(os.Stderr, "error:", ee.Error())
-		return
-	}
-	if errors.Is(err, os.ErrNotExist) {
-		fmt.Fprintln(os.Stderr, "error:", err)
 		return
 	}
 	fmt.Fprintln(os.Stderr, "error:", err)
