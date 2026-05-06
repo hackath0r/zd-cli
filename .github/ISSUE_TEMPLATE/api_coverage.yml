@@ -1,0 +1,24 @@
+name: Missing API coverage
+description: An endpoint in the Zenduty / Xurrent IMR OpenAPI spec isn't wrapped yet.
+title: "feat(api): wrap "
+labels: ["api-coverage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        v0.1.x focuses on the operational hot path (incidents, events,
+        oncall). The full ~140-endpoint spec coverage is rolling out
+        progressively. Use this issue to nominate the next endpoint to wrap.
+  - type: input
+    id: endpoint
+    attributes:
+      label: Endpoint
+      placeholder: POST /api/account/teams/{team_id}/services/
+    validations:
+      required: true
+  - type: textarea
+    id: usecase
+    attributes:
+      label: What you would use it for
+    validations:
+      required: true

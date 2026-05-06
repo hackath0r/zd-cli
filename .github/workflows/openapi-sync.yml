@@ -1,0 +1,51 @@
+name: openapi-sync
+
+on:
+  schedule:
+    - cron: '0 5 * * 1' # Mondays at 05:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: pull spec
+        run: make openapi-pull
+      - name: regenerate client
+        run: make generate
+      - name: detect drift
+        id: drift
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+      - name: open PR
+        if: steps.drift.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore(api): sync OpenAPI spec from apidocs.zenduty.com'
+          title: 'chore(api): sync OpenAPI spec'
+          body: |
+            Automated sync of the upstream Zenduty / Xurrent IMR OpenAPI spec.
+
+            - Refreshed `api/openapi.yaml` via `make openapi-pull`
+            - Regenerated `internal/zenduty/zenduty.gen.go` via `make generate`
+
+            Please review the diff to confirm no breaking changes leaked into
+            the typed CLI commands.
+          branch: bot/openapi-sync
+          delete-branch: true
+          labels: |
+            automation
+            api

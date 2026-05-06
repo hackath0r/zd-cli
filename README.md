@@ -1,24 +1,294 @@
 # zd-cli
 
-> Cross-platform command-line interface for the Zenduty / Xurrent IMR REST API. Fast incident workflows, scriptable on-call lookups, and idempotent alert ingestion from your terminal.
+> Cross-platform command-line interface for the [Zenduty / Xurrent IMR](https://www.zenduty.com) REST API. Fast incident workflows, scriptable on-call lookups, and idempotent alert ingestion from your terminal.
 
 [![CI](https://github.com/hackath0r/zd-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/hackath0r/zd-cli/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/hackath0r/zd-cli?include_prereleases)](https://github.com/hackath0r/zd-cli/releases)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hackath0r/zd-cli)](https://goreportcard.com/report/github.com/hackath0r/zd-cli)
-[![Latest Release](https://img.shields.io/github/v/release/hackath0r/zd-cli?include_prereleases)](https://github.com/hackath0r/zd-cli/releases)
+[![Downloads](https://img.shields.io/github/downloads/hackath0r/zd-cli/total)](https://github.com/hackath0r/zd-cli/releases)
 
-`zd` covers every endpoint in the Zenduty / Xurrent IMR REST API, with a
-binary-per-platform install (no runtime required) and clean JSON output for
-scripts and AI agents.
+`zd` ships as a single static binary on every major platform — no Python,
+Node, or Docker runtime needed. The same binary is also installed as
+`ximr` so you can use either name. Output is a human-readable table on
+a TTY and clean JSON when piped, so scripts and AI-driven skills get
+structured data without flag gymnastics.
 
-The CLI ships as `zd` and a `ximr` symlink that behaves identically — pick
-whichever name reads better in your shell history.
+```sh
+$ zd incident list --status open
+NUMBER  STATUS        URGENCY  TITLE                       SERVICE          ASSIGNED_TO  CREATED
+4815    triggered     high     payments-api timeout        payments-api     ada.lovelace 2026-05-06T08:42:13Z
+4814    acknowledged  high     elevated 5xx in checkout    checkout-svc     grace.hopper 2026-05-06T08:21:55Z
 
-## Status
+$ zd incident ack 4815
+$ zd incident note add 4815 -m "investigating; rolling back deploy abc123"
+$ zd oncall now
+TEAM     ESCALATION_POLICY   RULE_DELAY_MINUTES  USER          EMAIL
+sre      sre-primary         0                   Ada Lovelace  ada@example.com
+```
 
-Project scaffolding in progress. Full README, install instructions, and
-distribution channels coming with the first release.
+## Why `zd-cli`
+
+- **Single binary, every OS.** Static Go build for macOS / Linux / Windows
+  (amd64 + arm64). Cold-start in milliseconds.
+- **Two names, one binary.** `zd` and `ximr` are interchangeable so you
+  can adopt either depending on whether your team thinks of the product
+  as Zenduty (legacy) or Xurrent IMR (current).
+- **Generated from the OpenAPI spec.** Every typed request/response in
+  `internal/zenduty/zenduty.gen.go` mirrors the upstream spec, so
+  upstream additions become CLI commands with zero hand translation.
+- **Honest about auth.** Zenduty's docs claim `Authorization: Bearer ...`
+  but the API actually wants `Authorization: Token ...`. `zd-cli` always
+  sends the right header (and tests guard against regression).
+- **Built for scripting.** `--output json` (the default off-TTY) is
+  always pure JSON; exit codes follow a documented contract:
+
+  | Code | Meaning |
+  | ---- | ---------------------------------------- |
+  | 0    | success                                  |
+  | 1    | API error (4xx / 5xx, retries exhausted) |
+  | 2    | usage error (bad flags, missing args)    |
+  | 3    | configuration error                      |
+  | 4    | network or retry exhausted               |
+
+- **Resilient by default.** Retries on 429 and 5xx with exponential
+  backoff (capped at 4s), honours `Retry-After`, replays the request
+  body safely.
+
+## Install
+
+### Homebrew (macOS / Linux)
+
+```sh
+brew install hackath0r/tap/zd-cli
+```
+
+### Scoop (Windows)
+
+```powershell
+scoop bucket add hackath0r https://github.com/hackath0r/scoop-bucket
+scoop install zd-cli
+```
+
+### One-liner installer
+
+```sh
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/hackath0r/zd-cli/main/scripts/install.sh | sh
+
+# Windows (PowerShell)
+iwr -useb https://raw.githubusercontent.com/hackath0r/zd-cli/main/scripts/install.ps1 | iex
+```
+
+The installer downloads the latest release, verifies the sha256, drops
+both `zd` and `ximr` on `PATH`, and (on macOS) clears the Gatekeeper
+quarantine xattr because we don't currently ship Apple-notarized
+binaries.
+
+### Debian / Ubuntu (apt)
+
+```sh
+curl -fsSL "https://github.com/hackath0r/zd-cli/releases/latest/download/zd_$(dpkg --print-architecture).deb" -o /tmp/zd.deb
+sudo apt install /tmp/zd.deb
+```
+
+### RHEL / Fedora / CentOS (rpm)
+
+```sh
+sudo rpm -Uvh "https://github.com/hackath0r/zd-cli/releases/latest/download/zd_$(rpm --eval %{_arch}).rpm"
+```
+
+### Go (latest tagged release)
+
+```sh
+go install github.com/hackath0r/zd-cli/cmd/zd@latest
+```
+
+### Direct download
+
+Pre-built archives, deb / rpm packages, and `checksums.txt` are on every
+[GitHub Release](https://github.com/hackath0r/zd-cli/releases).
+
+## Quickstart
+
+```sh
+zd config init                                 # writes ~/.config/zd/config.yaml
+export ZENDUTY_API_TOKEN=zd_xxxxxxxxxxxxxx     # or set per-profile via token_env
+zd config doctor                               # GET /api/account/members/ smoke test
+zd incident list                               # open incidents, table on TTY, JSON when piped
+zd oncall now                                  # uses default_team from the profile
+```
+
+Generate an API token at: **Zenduty / Xurrent console -> Account -> API Keys**.
+
+## Top-10 cheat sheet
+
+| Command | What it does |
+| ------- | ------------- |
+| `zd incident list --status open` | List open (triggered + acknowledged) incidents |
+| `zd incident get 4815`           | Show one incident |
+| `zd incident ack 4815`           | Acknowledge it |
+| `zd incident resolve 4815`       | Resolve it |
+| `zd incident note add 4815 -m "rollback abc123"` | Drop a timeline note |
+| `zd incident responder add-user 4815 --user grace.hopper` | Page a teammate |
+| `zd event fire --integration-key K --message "db unreachable" --entity-id db-1`<br/>`  --wait` | Fire an alert and wait for ingestion to terminate |
+| `zd event status <trace-id> --watch` | Poll a trace until completed/failed |
+| `zd oncall list --team T` | Full oncall roster for a team |
+| `zd oncall now` | Current primaries for the profile's default team |
+
+Pair with `--output json` and `jq` for scripting:
+
+```sh
+zd incident list --status open --output json | jq '.[] | select(.urgency == "high") | .incident_number'
+```
+
+## Configuration
+
+`zd-cli` resolves every value with this precedence: **flag > env > profile
+> default**. Profiles live in `~/.config/zd/config.yaml` (or
+`$XDG_CONFIG_HOME/zd/config.yaml`). The file is `0600` by design.
+
+```yaml
+default_profile: prod
+profiles:
+  prod:
+    host: https://www.zenduty.com
+    token_env: ZENDUTY_API_TOKEN
+    account_id: ABCDE
+    default_team: 03f7b1c2-...
+  staging:
+    host: https://www.zenduty.com
+    token_env: ZENDUTY_STAGING_TOKEN
+```
+
+| Field          | Meaning |
+| -------------- | -------- |
+| `host`         | API base URL. Defaults to `https://www.zenduty.com`. |
+| `token`        | Token stored inline (discouraged; use `token_env` instead). |
+| `token_env`    | Environment variable name to read the token from. |
+| `account_id`   | 5-character account identifier; required by `zd event fire`. |
+| `default_team` | Used by `zd oncall now` and as a fallback for team-scoped commands. |
+
+Switch profiles with `zd config use <profile>` or per-invocation with
+`--profile <name>`.
+
+## Output formats
+
+```
+--output table     Human table (default on TTY)
+--output json      Pretty JSON (default when piped)
+--output yaml      YAML
+--output template  Custom Go text/template via --template
+```
+
+Examples:
+
+```sh
+zd incident list --output template --template '{{range .}}{{.incident_number}} {{.title}}\n{{end}}'
+
+zd oncall now --output yaml
+```
+
+## Skills & scripting
+
+Because `--output json` is the default when stdout isn't a TTY, you can
+pipe `zd-cli` directly into other tools without any flags:
+
+```sh
+# Top 5 oldest open high-urgency incidents
+zd incident list --status open | jq '[.[] | select(.urgency=="high")] | sort_by(.creation_date) | .[:5]'
+
+# Idempotent alert from CI (entity-id dedupes on retry)
+zd event fire --integration-key "$ZD_INTEGRATION" \
+  --message "build $CI_BUILD_ID failed" \
+  --entity-id "build-$CI_BUILD_ID" \
+  --wait
+```
+
+For Cursor and other AI-driven workflows, every command's stderr on
+failure is structured JSON, so you can branch on `error.code`,
+`error.status`, or `error.url` without parsing prose.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    user["User / skill"] --> zd["zd or ximr binary"]
+    zd --> cobra["cobra root + subcommands"]
+    cobra --> viper["viper config: flag, env, file"]
+    cobra --> client["internal/zenduty.Client"]
+    client --> auth["RequestEditor: Authorization: Token KEY"]
+    client --> retry["retry/backoff middleware"]
+    client --> gen["oapi-codegen generated typed client"]
+    gen --> api["api.zenduty.com / xurrent.com"]
+    cobra --> output["internal/output: json | yaml | table | template"]
+    output --> stdout["stdout"]
+```
+
+```mermaid
+flowchart TD
+    tag["git tag vX.Y.Z + push"] --> ga["GitHub Actions: release.yml"]
+    ga --> gr["goreleaser"]
+    gr --> bin1["darwin amd64 + arm64"]
+    gr --> bin2["linux amd64 + arm64"]
+    gr --> bin3["windows amd64 (zip)"]
+    gr --> debrpm["deb + rpm"]
+    gr --> rel["GitHub Release with checksums.txt + cosign sigs"]
+    rel --> brew["Homebrew tap: hackath0r/homebrew-tap"]
+    rel --> scoop["Scoop bucket: hackath0r/scoop-bucket"]
+    rel --> install["raw install.sh / install.ps1 on main"]
+    rel --> goinstall["go install ...@latest"]
+```
+
+## Coverage roadmap
+
+`zd-cli v0.1.x` covers the operational hot path:
+
+| Area | Status | Commands |
+| ---- | ------ | -------- |
+| Incidents          | full | list / get / create / update / ack / resolve / alerts / note / tag / responder |
+| Events             | full | fire / ack / resolve / status (with --wait / --watch) |
+| Oncall             | full | list / who / now |
+| Config             | full | init / show / use / set / doctor / path |
+| Account / users    | _planned (v0.2)_ | members, custom roles, invites |
+| Teams              | _planned (v0.2)_ | full CRUD + nested resources |
+| Services / integrations | _planned (v0.2)_ | full CRUD + regenerate-key |
+| Schedules / overrides   | _planned (v0.3)_ | v1 + v2 |
+| Escalation policies     | _planned (v0.3)_ | full CRUD |
+| Tags / priorities / SLA / postmortem / maintenance / task-templates | _planned (v0.4)_ | full CRUD |
+| Router + alert rules    | _planned (v0.4)_ | full CRUD |
+| Analytics               | _planned (v0.5)_ | aggregate stats |
+
+Track progress on the [issues board](https://github.com/hackath0r/zd-cli/issues?q=label%3Aapi-coverage).
+The OpenAPI spec is vendored at `api/openapi.yaml` and a weekly
+`openapi-sync` workflow keeps it fresh.
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). Conventional Commits are
+enforced for the changelog. Please open an issue before working on a
+large feature so we don't duplicate effort.
+
+## Brand note
+
+Zenduty was acquired by [Xurrent](https://www.xurrent.com) in 2025 and
+rebranded to *Xurrent Incident Management & Response* (IMR). The same
+binary is shipped as both `zd` and `ximr` so you can pick whichever name
+fits your team's terminology. The default API host is still
+`https://www.zenduty.com` until the upstream migration completes; see
+[`docs/BRAND.md`](docs/BRAND.md) for details.
+
+## Acknowledgments
+
+- Built on top of the official [Zenduty OpenAPI spec](https://apidocs.zenduty.com).
+- Generated client courtesy of [oapi-codegen](https://github.com/oapi-codegen/oapi-codegen).
+- CLI ergonomics on [cobra](https://github.com/spf13/cobra) and
+  [viper](https://github.com/spf13/viper).
+- Cross-platform releases by [GoReleaser](https://goreleaser.com).
+- Thanks to the broader Zenduty / Xurrent community whose support
+  conversations informed the foot-gun fixes (`Token` vs `Bearer`,
+  malformed path placeholders, list-vs-singleton spec quirks).
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Apache License 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).

@@ -1,0 +1,45 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug! Please redact API tokens from any pasted output.
+  - type: input
+    id: version
+    attributes:
+      label: zd version
+      description: Output of `zd version`
+      placeholder: zd v0.1.0 (commit abc1234, built 2026-...)
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS / arch
+      placeholder: macOS 14 arm64 / Ubuntu 22.04 amd64 / Windows 11 amd64
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command run
+      description: The exact command, with `<token>` redacted.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include exit code, stderr (run with --debug if helpful), and the curl reproduction (--debug-curl) if relevant.
+    validations:
+      required: true
