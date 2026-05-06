@@ -66,6 +66,7 @@ resolve_version() {
 
 resolve_prefix() {
     if [ "${ZD_PREFIX:-}" != "" ]; then
+        mkdir -p "${ZD_PREFIX}/bin"
         echo "$ZD_PREFIX"
         return
     fi
