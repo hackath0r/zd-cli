@@ -304,8 +304,8 @@ type AnalyticsRequestBody struct {
 	// EscalationPolicyIds List of escalation policy unique_id UUIDs.
 	EscalationPolicyIds *[]openapi_types.UUID `json:"escalation_policy_ids,omitempty"`
 
-	// FromDate Start date in YYYY-MM-DD format
-	FromDate *openapi_types.Date `json:"from_date,omitempty"`
+	// FromDate Start of the date range. Accepts a date (`YYYY-MM-DD`), which includes the whole day, or a datetime (`YYYY-MM-DD HH:MM:SS` or ISO 8601) for an exact lower bound.
+	FromDate *string `json:"from_date,omitempty"`
 
 	// PriorityIds List of team priority unique_id UUIDs.
 	PriorityIds *[]openapi_types.UUID `json:"priority_ids,omitempty"`
@@ -322,8 +322,11 @@ type AnalyticsRequestBody struct {
 	// TeamIds List of team unique_id UUIDs. Empty array means all accessible teams.
 	TeamIds *[]openapi_types.UUID `json:"team_ids,omitempty"`
 
-	// ToDate End date in YYYY-MM-DD format
-	ToDate *openapi_types.Date `json:"to_date,omitempty"`
+	// TimeZone IANA timezone name (e.g. `Asia/Kolkata`) used to bucket results by local day or hour. Defaults to UTC if omitted or invalid.
+	TimeZone *string `json:"time_zone,omitempty"`
+
+	// ToDate End of the date range. Accepts a date (`YYYY-MM-DD`), which includes the whole day, or a datetime (`YYYY-MM-DD HH:MM:SS` or ISO 8601) for an exact upper bound.
+	ToDate *string `json:"to_date,omitempty"`
 
 	// Tta Time-to-acknowledge threshold in seconds. Requires tta_comparator.
 	Tta *float32 `json:"tta,omitempty"`
@@ -1163,7 +1166,7 @@ type IncidentFilterPayload struct {
 	// EscalationPolicyIds A list of escalation policy unique ids
 	EscalationPolicyIds *[]string `json:"escalation_policy_ids,omitempty"`
 
-	// FromDate Represents from_date and filters incidents whose creation_date is greater than the specified from_date. example - `from_date="2023-02-01"`
+	// FromDate Filters incidents created on or after this value. Accepts a date (`YYYY-MM-DD`), which includes the whole day, or a datetime (`YYYY-MM-DD HH:MM:SS` or ISO 8601) for an exact lower bound. example - `from_date="2023-02-01"` or `from_date="2023-02-01 09:30:00"`
 	FromDate *string `json:"from_date,omitempty"`
 
 	// PostmortemFilter An integer that represents weather the postmortem is attached to the incident or not
@@ -1190,7 +1193,7 @@ type IncidentFilterPayload struct {
 	// TeamIds A list of Team unique ids
 	TeamIds *[]string `json:"team_ids,omitempty"`
 
-	// ToDate Represents to_date and filters incidents whose creation_date is lesser than the specified to_date. example - `to_date="2023-02-01"`
+	// ToDate Filters incidents created on or before this value. Accepts a date (`YYYY-MM-DD`), which includes the whole day, or a datetime (`YYYY-MM-DD HH:MM:SS` or ISO 8601) for an exact upper bound. example - `to_date="2023-02-28"` or `to_date="2023-02-28 18:00:00"`
 	ToDate *string `json:"to_date,omitempty"`
 
 	// UserIds A list of User usernames
